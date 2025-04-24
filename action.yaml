@@ -1,0 +1,40 @@
+name: Determine Region
+description: Determine the target region (UK, DE, BR) from branch names
+
+inputs:
+  source-branch:
+    description: Source branch name (e.g., feature/UK-123)
+    required: true
+  destination-branch:
+    description: Destination branch name (e.g., promotion/DE or qa)
+    required: true
+
+outputs:
+  region:
+    description: Detected region based on the branch names
+    value: ${{ steps.detect.outputs.region }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Detect Region
+      id: detect
+      shell: bash
+      run: |
+        lower_source="${{ inputs.source-branch,, }}" 
+        lower_dest="${{ inputs.destination-branch,, }}"
+        
+        region=""
+
+        if [[ "$lower_source" == *"uk"* || "$lower_dest" == *"uk"* ]]; then
+          region="uk"
+        fi
+        if [[ "$lower_source" == *"de"* || "$lower_dest" == *"de"* ]]; then
+          if [[ "$region" == "uk" ]]; then
+            region="br"
+          else
+            region="de"
+          fi
+        fi
+
+        echo "region=$region" >> $GITHUB_OUTPUT
